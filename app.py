@@ -22,6 +22,9 @@ app = Flask(__name__)
 
 
 CHANNELS = ["FCz", "C3", "Cz", "C4", "CP3", "CPz", "CP4", "Pz"]
+CSP_COMPONENTS = 4
+SVM_C = 2.0
+SVM_GAMMA = "scale"
 
 
 @dataclass
@@ -118,8 +121,16 @@ def _band_power_features(epochs):
 def _build_status(labels):
     unique, counts = np.unique(labels, return_counts=True)
     mapping = dict(zip(unique.tolist(), counts.tolist()))
-    left = mapping.get(2, mapping.get(1, 0))
-    right = mapping.get(3, mapping.get(2, 0)) if left == 0 else mapping.get(3, 0)
+    if 2 in mapping and 3 in mapping:
+        left = mapping[2]
+        right = mapping[3]
+    elif 1 in mapping and 2 in mapping:
+        left = mapping[1]
+        right = mapping[2]
+    else:
+        ordered = sorted(mapping.items(), key=lambda x: x[0])
+        left = ordered[0][1] if ordered else 0
+        right = ordered[1][1] if len(ordered) > 1 else 0
     return left, right
 
 
@@ -135,10 +146,10 @@ def _run_classification(epochs, labels):
     x_train, x_test, y_train, y_test = train_test_split(
         x, y_bin, test_size=0.2, random_state=42, stratify=y_bin
     )
-    csp = CSP(n_components=4, reg=None, log=True, norm_trace=False)
+    csp = CSP(n_components=CSP_COMPONENTS, reg=None, log=True, norm_trace=False)
     x_train_csp = csp.fit_transform(x_train, y_train)
     x_test_csp = csp.transform(x_test)
-    base = SVC(kernel="rbf", C=2.0, gamma="scale")
+    base = SVC(kernel="rbf", C=SVM_C, gamma=SVM_GAMMA)
     model = CalibratedClassifierCV(base, method="sigmoid", cv=3)
     model.fit(x_train_csp, y_train)
     y_pred = model.predict(x_test_csp)
@@ -149,11 +160,11 @@ def _run_classification(epochs, labels):
     top_pred = int(y_pred[top_idx])
     conf = float(np.max(probs[top_idx]))
     pred_label = "Left Hand Movement" if top_pred == 0 else "Right Hand Movement"
-    csp_cv = CSP(n_components=4, reg=None, log=True, norm_trace=False)
+    csp_cv = CSP(n_components=CSP_COMPONENTS, reg=None, log=True, norm_trace=False)
     x_csp = csp_cv.fit_transform(x, y_bin)
     cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
     cv_scores = cross_val_score(
-        CalibratedClassifierCV(SVC(kernel="rbf", C=2.0, gamma="scale"), method="sigmoid", cv=3),
+        CalibratedClassifierCV(SVC(kernel="rbf", C=SVM_C, gamma=SVM_GAMMA), method="sigmoid", cv=3),
         x_csp,
         y_bin,
         cv=cv,
@@ -337,4 +348,4 @@ def api_status():
 
 
 if __name__ == "__main__":
-    app.run(debug=True, host="127.0.0.1", port=5000)
+    app.run(debug=False, host="127.0.0.1", port=5000)
