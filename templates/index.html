@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NeuroSense – EEG Motor Imagery Classification</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.plot.ly/plotly-2.32.0.min.js"></script>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar card">
+      <div>
+        <h1 class="brand">NeuroSense</h1>
+        <p class="muted">PhysioNet Auto-Download</p>
+        <p class="tiny">Load EEG Motor Imagery runs (S001, runs 4/8/12) and classify left vs right hand imagery.</p>
+      </div>
+      <div class="stack">
+        <button id="btnDownloadLoad" class="btn btn-primary">Download &amp; Load</button>
+        <label for="edfUpload" class="btn btn-secondary">Upload EDF</label>
+        <input id="edfUpload" type="file" accept=".edf">
+        <button id="btnRunClassSide" class="btn btn-accent">Run Classification</button>
+      </div>
+      <div id="statusBox" class="status-box">Subject 001 | 23 left + 22 right epochs</div>
+    </aside>
+
+    <main class="main-content">
+      <header class="main-header card">
+        <h2>NeuroSense – EEG Motor Imagery Classification</h2>
+        <p>Dataset: PhysioNet EEGBCI | Pipeline: Bandpass (8–30 Hz) → Epoching → CSP → SVM (Calibrated)</p>
+      </header>
+
+      <section class="control-panel card">
+        <button id="btnLoadS001" class="btn btn-primary">Load PhysioNet S001</button>
+        <button id="btnSynthetic" class="btn btn-secondary">Generate Synthetic Data</button>
+        <button id="btnRunClassMain" class="btn btn-accent">Run Classification</button>
+        <button id="btnDemo" class="btn btn-ghost">Demo Mode</button>
+      </section>
+
+      <section class="content-grid">
+        <div class="left-pane">
+          <article class="card eeg-card">
+            <div class="card-head">
+              <h3>EEG Signal Monitor</h3>
+              <span id="dataSourcePill" class="pill">No source</span>
+            </div>
+            <div id="eegChart" class="chart"></div>
+          </article>
+
+          <article class="card analytics-card">
+            <h3>Analytics</h3>
+            <div class="analytics-grid">
+              <div class="sub-card">
+                <h4>Spectrogram (mu/beta highlighted)</h4>
+                <div id="spectrogramChart" class="mini-chart"></div>
+              </div>
+              <div class="sub-card">
+                <h4>Band Power</h4>
+                <div id="bandPowerChart" class="mini-chart"></div>
+              </div>
+              <div class="sub-card">
+                <h4>Confusion Matrix</h4>
+                <div id="confusionChart" class="mini-chart"></div>
+              </div>
+            </div>
+          </article>
+        </div>
+
+        <aside class="right-pane">
+          <article class="card metric prediction">
+            <h4>Predicted Class</h4>
+            <div id="predictedClass" class="metric-value big">—</div>
+          </article>
+          <article class="card metric confidence">
+            <h4>Confidence Score</h4>
+            <div id="confidenceValue" class="metric-value">0.0%</div>
+            <div class="progress-wrap"><div id="confidenceBar" class="progress"></div></div>
+          </article>
+          <article class="card metric accuracy">
+            <h4>Model Accuracy</h4>
+            <div id="accuracyValue" class="metric-value">0.0%</div>
+          </article>
+          <article class="card metric cv">
+            <h4>Cross-validation Score</h4>
+            <div id="cvValue" class="metric-value">0.0%</div>
+          </article>
+        </aside>
+      </section>
+    </main>
+  </div>
+
+  <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
